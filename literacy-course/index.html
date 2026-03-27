@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>萌趣识字乐园 · 启蒙互动课件</title>
+  <link rel="stylesheet" href="css/literacy.css" />
+  <!-- 笔顺数据与 Hanzi Writer 需联网；可下载 hanzi-writer-data 到本地后改 charDataLoader -->
+  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.6.0/dist/hanzi-writer.min.js" crossorigin="anonymous"></script>
+  <script defer src="js/strokes.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="logo">萌趣识字乐园</div>
+      <div class="stars-bar" title="星星奖励">⭐ <span id="starCount">0</span></div>
+    </header>
+    <nav class="tabs" id="mainNav">
+      <button type="button" data-view="home" class="active">首页</button>
+      <button type="button" data-view="review">复习</button>
+      <button type="button" data-view="achieve">成就</button>
+      <button type="button" data-view="parent">家长</button>
+    </nav>
+
+    <section id="view-home" class="view active">
+      <div class="card">
+        <h2 class="section">选一级，开始玩中学</h2>
+        <div class="level-grid">
+          <div class="level-card">
+            <h3>启蒙篇</h3>
+            <p>100 个最常用字<br />生活场景 · 好认好玩</p>
+            <button type="button" class="primary" data-open-level="1">进入启蒙篇</button>
+          </div>
+          <div class="level-card">
+            <h3>基础篇</h3>
+            <p>100 课动作与物品<br />词语拓展 · 表达更丰富</p>
+            <button type="button" class="primary" data-open-level="2">进入基础篇</button>
+          </div>
+          <div class="level-card">
+            <h3>提升篇</h3>
+            <p>100 课衔接必备<br />字词与情感 · 幼小衔接</p>
+            <button type="button" class="primary" data-open-level="3">进入提升篇</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="listPanel" style="display:none;">
+        <button type="button" class="back-btn" id="backToLevels">← 返回选级</button>
+        <h2 class="section" id="listTitle">字表</h2>
+        <div class="progress-line"><i id="levelProgress"></i></div>
+        <p class="parent-muted" id="listHint">点击一个字进入课程</p>
+        <div class="char-list" id="charList"></div>
+      </div>
+    </section>
+
+    <section id="view-lesson" class="view">
+      <button type="button" class="back-btn" id="backFromLesson">← 返回字表</button>
+      <div class="lesson-layout">
+        <div class="card">
+          <h2 class="section" id="lessonTitle">认识汉字</h2>
+          <div class="video-box" id="videoBox">
+            <span class="placeholder-tag">【视频占位】可替换为本地 MP4 / WebM</span>
+            <div class="wave" aria-hidden="true"></div>
+            <p id="introVoice" style="margin:0;font-size:0.95rem;color:#5a6d82;max-width:90%;text-align:center;line-height:1.5;"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="section">字形字音</h2>
+          <div class="big-char" id="displayChar">水</div>
+          <div class="pinyin-line" id="displayPy">shuǐ</div>
+          <div class="row-btns">
+            <button type="button" class="btn-big" id="speakChar">跟读汉字</button>
+            <button type="button" class="btn-big secondary" id="speakPy">跟读拼音</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="section">笔顺演示</h2>
+          <p id="strokeCharNote" class="parent-muted"></p>
+          <p id="strokeFallbackNote" class="stroke-fallback-note"></p>
+          <div class="stroke-stage">
+            <div id="hanziDemo" class="hanzi-box"></div>
+            <canvas id="strokeCanvas" width="280" height="280" style="display:none;"></canvas>
+            <p class="stroke-tip" id="strokeTip">笔顺口诀</p>
+            <button type="button" class="btn-big blue" id="replayStroke">再看一遍</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="section">字义拓展</h2>
+          <p id="wordsExpandHint" class="words-expand-hint"></p>
+          <div class="words-grid" id="wordsGrid"></div>
+        </div>
+        <div class="card">
+          <h2 class="section">趣味闯关</h2>
+          <div class="game-block">
+            <h4>关卡1 · 跟读小达人</h4>
+            <p class="parent-muted">点击下面按钮跟读，家长可帮孩子点「我读完啦」。</p>
+            <div class="row-btns">
+              <button type="button" class="btn-big" id="game1Read">跟读本课字</button>
+              <button type="button" class="btn-big secondary" id="game1Done">我读完啦 ⭐</button>
+            </div>
+          </div>
+          <div class="game-block">
+            <h4>关卡2 · 汉字找朋友</h4>
+            <p class="parent-muted">点出代表本课字的一幅图</p>
+            <p id="pickGameHint" class="pick-hint"></p>
+            <div class="pick-row" id="pickRow"></div>
+          </div>
+          <div class="game-block">
+            <h4>关卡3 · 笔顺描红</h4>
+            <p class="parent-muted">两种描红任选其一完成：① 上框按笔顺写 ② 下框田字格涂满。</p>
+            <p class="trace-zone-label">① 笔顺描红（跟着灰色线写）</p>
+            <div id="hanziQuiz" class="hanzi-box"></div>
+            <p class="trace-zone-label">② 田字格描红（沿浅字涂满）</p>
+            <canvas id="traceCanvas" width="260" height="260" style="display:none;"></canvas>
+            <div class="row-btns" style="margin-top:8px;">
+              <button type="button" class="btn-big secondary" id="clearTrace">重来</button>
+            </div>
+            <p id="traceStatus" class="parent-muted" style="text-align:center;"></p>
+          </div>
+          <div class="game-block">
+            <h4>关卡4 · 配配对</h4>
+            <p class="parent-muted">把字拖到图框里；手机可先点字块再点图框</p>
+            <div class="drag-zone" id="dragZone"></div>
+          </div>
+          <div class="badge-win" id="lessonComplete" style="display:none;"></div>
+        </div>
+        <div class="card">
+          <h2 class="section">复习提示</h2>
+          <p class="parent-muted" id="reviewHint">学完可以玩一玩以前的字哦～</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-review" class="view">
+      <div class="card">
+        <h2 class="section">艾宾浩斯复习</h2>
+        <p class="parent-muted">根据本地记录，到期会提示复习；答错的字会进入「薄弱字」。</p>
+        <div id="reviewQueue"></div>
+        <button type="button" class="btn-big blue" id="startReview" style="margin-top:10px;">开始今日复习</button>
+      </div>
+    </section>
+
+    <section id="view-achieve" class="view">
+      <div class="card">
+        <h2 class="section">成就墙</h2>
+        <p>累计星星：<strong id="achStars">0</strong></p>
+        <div class="medal-grid" id="medalBox"></div>
+      </div>
+    </section>
+
+    <section id="view-parent" class="view">
+      <div class="card">
+        <h2 class="section">学习概况</h2>
+        <p>已完成课程：<strong id="pDone">0</strong> / 300</p>
+        <div class="progress-line"><i id="pProgress"></i></div>
+        <p class="parent-muted" id="pWeak"></p>
+        <p class="parent-muted">数据仅存于本机浏览器（localStorage），清除站点数据会重置。</p>
+        <button type="button" class="btn-big secondary" id="resetData">清空学习记录（慎用）</button>
+      </div>
+    </section>
+
+    <footer class="hint">多文件版 · 笔顺使用 Hanzi Writer（首次需联网加载字库）· 语音为浏览器朗读</footer>
+  </div>
+</body>
+</html>
