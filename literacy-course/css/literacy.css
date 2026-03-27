@@ -67,6 +67,60 @@ h2.section { margin: 0 0 12px; font-size: 1.15rem; color: #4a6fa5; }
 .video-box .placeholder-tag {
   font-size: 0.85rem; color: var(--muted); background: rgba(255,255,255,0.75); padding: 4px 10px; border-radius: 999px;
 }
+.lesson-video {
+  width: 100%; max-height: 220px; border-radius: 16px; background: #0a1628;
+  box-shadow: 0 6px 20px rgba(60, 100, 140, 0.2);
+}
+.video-fallback {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 8px 6px;
+}
+.lesson-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 88px;
+}
+.lesson-visual-char {
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-family: var(--font-char);
+  font-weight: 800;
+  color: #2c4a6e;
+  text-shadow: 2px 3px 0 rgba(255, 255, 255, 0.85);
+  line-height: 1;
+  animation: charPop 2.4s ease-in-out infinite;
+}
+.lesson-visual-emoji {
+  font-size: clamp(2.5rem, 10vw, 3.5rem);
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  animation: emojiBob 2s ease-in-out infinite;
+}
+@keyframes charPop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@keyframes emojiBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.video-fallback .btn-big { margin-top: 4px; }
+.intro-voice {
+  margin: 0;
+  padding: 0 10px 10px;
+  font-size: 0.95rem;
+  color: #5a6d82;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.5;
+}
 .wave { width: 100%; height: 40px; background: repeating-linear-gradient(90deg, #7eb8da33 0 18px, transparent 18px 36px); animation: waveMove 3s linear infinite; }
 @keyframes waveMove { from { background-position: 0 0; } to { background-position: 72px 0; } }
 .big-char {

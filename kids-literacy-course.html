@@ -75,6 +75,60 @@
     .video-box .placeholder-tag {
       font-size: 0.85rem; color: var(--muted); background: rgba(255,255,255,0.75); padding: 4px 10px; border-radius: 999px;
     }
+    .lesson-video {
+      width: 100%; max-height: 220px; border-radius: 16px; background: #0a1628;
+      box-shadow: 0 6px 20px rgba(60, 100, 140, 0.2);
+    }
+    .video-fallback {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 8px 6px;
+    }
+    .lesson-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-height: 88px;
+    }
+    .lesson-visual-char {
+      font-size: clamp(3rem, 14vw, 4.5rem);
+      font-family: var(--font-char);
+      font-weight: 800;
+      color: #2c4a6e;
+      text-shadow: 2px 3px 0 rgba(255, 255, 255, 0.85);
+      line-height: 1;
+      animation: charPop 2.4s ease-in-out infinite;
+    }
+    .lesson-visual-emoji {
+      font-size: clamp(2.5rem, 10vw, 3.5rem);
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+      animation: emojiBob 2s ease-in-out infinite;
+    }
+    @keyframes charPop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    @keyframes emojiBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .video-fallback .btn-big { margin-top: 4px; }
+    .intro-voice {
+      margin: 0;
+      padding: 0 10px 10px;
+      font-size: 0.95rem;
+      color: #5a6d82;
+      max-width: 100%;
+      text-align: center;
+      line-height: 1.5;
+    }
     .wave { width: 100%; height: 40px; background: repeating-linear-gradient(90deg, #7eb8da33 0 18px, transparent 18px 36px); animation: waveMove 3s linear infinite; }
     @keyframes waveMove { from { background-position: 0 0; } to { background-position: 72px 0; } }
     .big-char {
@@ -239,9 +293,18 @@
         <div class="card">
           <h2 class="section" id="lessonTitle">认识汉字</h2>
           <div class="video-box" id="videoBox">
-            <span class="placeholder-tag">【视频占位】可替换为本地 MP4 / WebM（src 见脚本内注释）</span>
-            <div class="wave" aria-hidden="true"></div>
-            <p id="introVoice" style="margin:0;font-size:0.95rem;color:#5a6d82;max-width:90%;text-align:center;line-height:1.5;"></p>
+            <!-- 与 literacy-course/media/videos/ 共用：本课字或词.mp4，如 人.mp4（单文件版路径带 literacy-course/ 前缀） -->
+            <video id="lessonVideo" class="lesson-video" controls playsinline preload="metadata" hidden></video>
+            <div class="video-fallback" id="videoFallback">
+              <span class="placeholder-tag" id="videoModeTag">微课 · 导读与字形</span>
+              <div class="lesson-visual" aria-hidden="true">
+                <span class="lesson-visual-char" id="lessonVisualChar"></span>
+                <span class="lesson-visual-emoji" id="lessonVisualEmoji"></span>
+              </div>
+              <div class="wave" aria-hidden="true"></div>
+              <button type="button" class="btn-big secondary" id="playIntroBtn">听一听 · 本课导读</button>
+            </div>
+            <p id="introVoice" class="intro-voice"></p>
           </div>
         </div>
         <div class="card">
@@ -342,7 +405,7 @@
       </div>
     </section>
 
-    <footer class="hint">笔顺需联网加载 Hanzi Writer 数据；失败时自动用简易描红。语音为浏览器朗读。</footer>
+    <footer class="hint">笔顺需联网加载 Hanzi Writer 数据；失败时自动用简易描红。语音为浏览器朗读。可选视频：literacy-course/media/videos/本课汉字.mp4（与多文件版同目录）。</footer>
   </div>
 
   <!-- 顺序：Hanzi Writer → strokes.js → 主逻辑（与 literacy-course/js/strokes.js 相对路径固定） -->
@@ -621,6 +684,58 @@
     window.speechSynthesis.speak(u);
   }
 
+  /** 单文件版与 literacy-course/index.html 共用 media/videos，故路径带 literacy-course/ 前缀 */
+  var LESSON_VIDEO_DIR = 'literacy-course/media/videos/';
+
+  function setupLessonVideo(lesson) {
+    var vid = document.getElementById('lessonVideo');
+    var fb = document.getElementById('videoFallback');
+    if (!vid || !fb) return;
+
+    var displayChar = lesson.text.length <= 2 ? lesson.text : lesson.text.charAt(0);
+    var vc = document.getElementById('lessonVisualChar');
+    var ve = document.getElementById('lessonVisualEmoji');
+    if (vc) vc.textContent = displayChar;
+    if (ve) ve.textContent = lesson.emoji || '🎈';
+
+    var t = encodeURIComponent(lesson.text);
+    var idPart = encodeURIComponent(lesson.id);
+    var tryList = [
+      LESSON_VIDEO_DIR + t + '.mp4',
+      LESSON_VIDEO_DIR + t + '.webm',
+      LESSON_VIDEO_DIR + idPart + '.mp4',
+      LESSON_VIDEO_DIR + idPart + '.webm'
+    ];
+
+    function showFallback() {
+      vid.pause();
+      vid.removeAttribute('src');
+      vid.load();
+      vid.setAttribute('hidden', '');
+      fb.hidden = false;
+    }
+    function showVideo() {
+      fb.hidden = true;
+      vid.removeAttribute('hidden');
+    }
+
+    vid.pause();
+    fb.hidden = false;
+    vid.setAttribute('hidden', '');
+
+    function attempt(i) {
+      if (i >= tryList.length) {
+        showFallback();
+        return;
+      }
+      vid.src = tryList[i];
+      vid.onerror = function () { attempt(i + 1); };
+      vid.onloadeddata = function () { showVideo(); };
+      vid.load();
+    }
+    attempt(0);
+  }
+
   /** ========== 笔顺画布：淡入描线示意 ========== */
   var strokeAnimTimer = null;
 
@@ -792,6 +907,7 @@
     document.getElementById('displayChar').textContent = lesson.text;
     document.getElementById('displayPy').textContent = lesson.pinyin;
     document.getElementById('introVoice').textContent = lesson.intro;
+    setupLessonVideo(lesson);
     document.getElementById('strokeTip').textContent = lesson.strokeTip;
     var wg = document.getElementById('wordsGrid');
     wg.innerHTML = '';
@@ -986,6 +1102,7 @@
 
   document.getElementById('speakChar').onclick = function () { if (currentLesson) speak(currentLesson.text); };
   document.getElementById('speakPy').onclick = function () { if (currentLesson) speak(currentLesson.pinyin.replace(/\s+/g, ' ')); };
+  document.getElementById('playIntroBtn').onclick = function () { if (currentLesson) speak(currentLesson.intro); };
   document.getElementById('replayStroke').onclick = function () {
     if (!currentLesson) return;
     if (window.LiteracyStrokes) {
@@ -1025,11 +1142,5 @@
   updateStars();
 })();
   </script>
-  <!--
-    替换本地视频示例（取消注释并放入同目录视频文件）：
-    <video controls playsinline style="width:100%;max-height:220px;border-radius:16px;">
-      <source src="lesson-water.mp4" type="video/mp4" />
-    </video>
-  -->
 </body>
 </html>

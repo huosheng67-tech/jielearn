@@ -272,6 +272,57 @@ function speak(text) {
   window.speechSynthesis.speak(u);
 }
 
+/** ========== 认识汉字区：本地视频或微课 fallback ========== */
+function setupLessonVideo(lesson) {
+  var vid = document.getElementById('lessonVideo');
+  var fb = document.getElementById('videoFallback');
+  if (!vid || !fb) return;
+
+  var displayChar = lesson.text.length <= 2 ? lesson.text : lesson.text.charAt(0);
+  var vc = document.getElementById('lessonVisualChar');
+  var ve = document.getElementById('lessonVisualEmoji');
+  if (vc) vc.textContent = displayChar;
+  if (ve) ve.textContent = lesson.emoji || '🎈';
+
+  /** 优先按本课汉字/词语命名（如 人.mp4、电话.mp4），便于辨认；其次兼容旧版按课程 id（如 L1_1.mp4） */
+  var t = encodeURIComponent(lesson.text);
+  var idPart = encodeURIComponent(lesson.id);
+  var tryList = [
+    'media/videos/' + t + '.mp4',
+    'media/videos/' + t + '.webm',
+    'media/videos/' + idPart + '.mp4',
+    'media/videos/' + idPart + '.webm'
+  ];
+
+  function showFallback() {
+    vid.pause();
+    vid.removeAttribute('src');
+    vid.load();
+    vid.setAttribute('hidden', '');
+    fb.hidden = false;
+  }
+  function showVideo() {
+    fb.hidden = true;
+    vid.removeAttribute('hidden');
+  }
+
+  vid.pause();
+  fb.hidden = false;
+  vid.setAttribute('hidden', '');
+
+  function attempt(i) {
+    if (i >= tryList.length) {
+      showFallback();
+      return;
+    }
+    vid.src = tryList[i];
+    vid.onerror = function () { attempt(i + 1); };
+    vid.onloadeddata = function () { showVideo(); };
+    vid.load();
+  }
+  attempt(0);
+}
+
 /** ========== 笔顺画布：淡入描线示意 ========== */
 var strokeAnimTimer = null;
 
@@ -444,6 +495,7 @@ function openLesson(lesson) {
   document.getElementById('displayChar').textContent = lesson.text;
   document.getElementById('displayPy').textContent = lesson.pinyin;
   document.getElementById('introVoice').textContent = lesson.intro;
+  setupLessonVideo(lesson);
   document.getElementById('strokeTip').textContent = lesson.strokeTip;
   var wg = document.getElementById('wordsGrid');
   wg.innerHTML = '';
@@ -623,6 +675,7 @@ document.querySelectorAll('#mainNav button').forEach(function (b) {
 
 document.getElementById('speakChar').onclick = function () { if (currentLesson) speak(currentLesson.text); };
 document.getElementById('speakPy').onclick = function () { if (currentLesson) speak(currentLesson.pinyin.replace(/\s+/g, ' ')); };
+document.getElementById('playIntroBtn').onclick = function () { if (currentLesson) speak(currentLesson.intro); };
 document.getElementById('replayStroke').onclick = function () {
   if (!currentLesson) return;
   if (window.LiteracyStrokes) {
