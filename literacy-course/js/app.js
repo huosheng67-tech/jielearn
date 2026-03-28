@@ -192,15 +192,26 @@ if (LESSONS.length !== 300) {
   console.warn('课程数量应为 300，当前：', LESSONS.length);
 }
 
-/** 字义拓展：组词 + 短句 + 点击朗读 */
+/** 字义拓展：组词 + 短句 + 点击朗读（主数据见 word-expansion.js） */
 function buildWordCards(L) {
   var t = L.text;
   var py = L.pinyin;
+  var bank = typeof LITERACY_WORD_EXPANSION !== 'undefined' ? LITERACY_WORD_EXPANSION : null;
+  if (bank && bank[t] && bank[t].length >= 4) {
+    return bank[t].slice(0, 4).map(function (x) {
+      return {
+        w: x.w,
+        s: x.s,
+        e: x.e || '📖',
+        speak: x.speak != null ? x.speak : x.w
+      };
+    });
+  }
   if (t.length > 1) {
     return [
-      { w: t, s: '词语「' + t + '」　拼音：' + py, e: L.emoji, speak: t },
-      { w: '读一读', s: '大声读出来吧！', e: '📢', speak: t },
-      { w: '记一记', s: '想一想在哪里见过？', e: '🧠', speak: t },
+      { w: t, s: '词语「' + t + '」，拼音：' + py + '。', e: L.emoji, speak: t },
+      { w: '读一读', s: '大声读：' + t + '。', e: '📢', speak: t },
+      { w: '想一想', s: '你在哪儿见过「' + t + '」？', e: '🧠', speak: t },
       { w: '我真棒', s: '今天又认识了新词！', e: '⭐', speak: '我真棒' }
     ];
   }
@@ -213,10 +224,10 @@ function buildWordCards(L) {
     ];
   }
   return [
-    { w: t + '头', s: '组词：' + t + '头。', e: '🙂', speak: t + '头' },
-    { w: t + '水', s: '组词：' + t + '水。', e: '💧', speak: t + '水' },
-    { w: '小' + t, s: '造句：小小的。', e: '⭐', speak: '小' + t },
-    { w: '大' + t, s: '造句：大大的。', e: '🌟', speak: '大' + t }
+    { w: t + '字', s: '今天我们学「' + t + '」字。', e: '📖', speak: '今天我们学「' + t + '」字' },
+    { w: '读' + t, s: '大声读：' + t + '。', e: '🔊', speak: t },
+    { w: '写' + t, s: '一笔一画写「' + t + '」。', e: '✏️', speak: '写' + t },
+    { w: '记' + t, s: '记住「' + t + '」的样子。', e: '🧠', speak: '记住' + t }
   ];
 }
 
